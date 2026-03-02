@@ -1,0 +1,18 @@
+FROM python:3.11-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg git && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir -U pip setuptools wheel && \
+    pip install --no-cache-dir \
+      huggingface_hub==0.25.2 \
+      torch==2.5.1 \
+      torchaudio==2.5.1 \
+      openai-whisper whisperx fastapi uvicorn[standard] python-multipart
+
+WORKDIR /app
+
+COPY whisper_api /app/whisper_api
+
+CMD ["uvicorn", "whisper_api.main:app", "--host", "0.0.0.0", "--port", "8000"]

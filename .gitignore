@@ -1,0 +1,16 @@
+.env
+.DS_Store
+
+# Runtime and local data
+records/
+audio/
+hf-cache/
+
+# Whisper/model caches
+whisper-cache/
+**/__pycache__/
+*.pyc
+
+# Logs and temp files
+*.log
+*.tmp
