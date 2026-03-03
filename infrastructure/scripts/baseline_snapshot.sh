@@ -11,10 +11,7 @@ mkdir -p "${OUT_DIR}"
 echo "Creating baseline backup archive at: ${TARGET}"
 tar -czf "${TARGET}" \
   -C "${ROOT_DIR}" \
-  runtime/n8n_data \
   runtime/records \
-  runtime/audio \
-  infrastructure/supabase/volumes/db/data \
-  infrastructure/supabase/volumes/storage
+  runtime/audio
 
 echo "Done."

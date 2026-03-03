@@ -12,9 +12,9 @@ check() {
   fi
 }
 
-check "http://localhost:5678/healthz" "n8n"
-check "http://localhost:8080/" "nginx"
-check "http://localhost:3000/" "studio"
-check "http://localhost:8000/auth/v1/health" "kong->auth"
+check "http://localhost:8080/audio-upload" "nginx static ui"
+check "http://localhost:8080/audio-ingest/health" "audio-ingest health"
+check "http://localhost:8080/whisper/health" "whisper health"
+check "http://localhost:8080/parakeet/health" "parakeet health"
 
 echo "Smoke checks passed."

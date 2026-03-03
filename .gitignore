@@ -3,11 +3,8 @@
 
 # Runtime and local data
 runtime/
-runtime/n8n_data/database.sqlite
-n8n_data/database.sqlite
 hf-cache/
 parakeet-cache/
-infrastructure/supabase/
 *.tar.gz
 
 # Python caches
@@ -20,3 +17,4 @@ whisper-cache/
 # Logs and temp files
 *.log
 *.tmp
+.worktrees/

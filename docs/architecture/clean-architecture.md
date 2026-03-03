@@ -1,14 +1,12 @@
 # Соглашения по Clean Architecture
 
-Репозиторий организован как единый модульный монорепозиторий с явными границами контекстов.
+Репозиторий организован как модульный монорепозиторий с явными границами контекстов.
 
 ## Границы контекстов
 
-- `automation` — оркестрация и прикладной поток (`n8n`, API распознавания).
-- `services` — прикладные сервисы (`services/whisper_chunk_api`, `services/parakeet_api`).
-- `supabase` — инфраструктурный стек в `infrastructure/supabase`.
+- `services` — прикладные сервисы (`services/whisper_chunk_api`, `services/parakeet_api`, `services/audio_ingest_api`).
 - `infrastructure` — compose-конфиги, gateway, env-шаблоны, служебные скрипты.
-- `runtime` — изменяемые локальные данные (`runtime/n8n_data`, `runtime/records`, `runtime/audio`).
+- `runtime` — изменяемые локальные данные (`runtime/records`, `runtime/audio`).
 - `qa` — тесты и артефакты верификации (`qa/tests`).
 
 ## Слои Python-сервисов
@@ -24,18 +22,16 @@
 
 - `entrypoints -> application`
 - `infrastructure -> application`
-- `application` не должен импортировать `fastapi`, `nemo`, `openai`, `whisper`, `subprocess` и другие инфраструктурные зависимости.
+- `application` не должен импортировать инфраструктурные библиотеки (`fastapi`, `openai`, `whisper`, `subprocess`, и т.д.).
 
 ## Структура Compose
 
-- `docker-compose.base.yml` — общие сети и volume.
-- `docker-compose.automation.yml` — контекст automation.
-- `docker-compose.supabase.yml` — контекст supabase.
-- `docker-compose.yml` — legacy-совместимость на период миграции.
+- `docker-compose.yml` — единый audio-only стек (`whisper`, `parakeet`, `audio-ingest`, `audio-ingest-worker`, `nginx`).
 
 ## Definition of Done для изменений
 
 1. Внешний API-контракт совместим (если не согласовано версионирование).
 2. Для use case есть unit/contract-тесты.
-3. Compose smoke-check проходит для затронутого контекста.
+3. Compose smoke-check проходит для затронутого контура.
 4. Runtime-данные не попадают в git.
+
