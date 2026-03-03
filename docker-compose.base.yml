@@ -1,0 +1,8 @@
+volumes:
+  db-config:
+  parakeet-cache:
+  whisper-cache:
+
+networks:
+  n8nnet:
+    driver: bridge

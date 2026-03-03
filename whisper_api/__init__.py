@@ -1,2 +1,0 @@
-"""Whisper API package."""
-

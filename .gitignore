@@ -2,14 +2,18 @@
 .DS_Store
 
 # Runtime and local data
-records/
-audio/
+runtime/
 hf-cache/
+parakeet-cache/
+infrastructure/supabase/
+*.tar.gz
 
-# Whisper/model caches
-whisper-cache/
+# Python caches
 **/__pycache__/
 *.pyc
+whisper-cache/
+.pytest_cache/
+.venv/
 
 # Logs and temp files
 *.log

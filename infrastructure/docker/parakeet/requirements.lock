@@ -1,0 +1,4 @@
+fastapi
+nemo_toolkit[asr]
+python-multipart
+uvicorn[standard]

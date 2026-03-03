@@ -1,0 +1,68 @@
+services:
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile.n8n
+      args:
+        N8N_VERSION: ${N8N_VERSION}
+    image: custom-n8n:${N8N_VERSION}
+    restart: unless-stopped
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - N8N_SECURE_COOKIE=false
+      - N8N_PAYLOAD_SIZE_MAX=${N8N_PAYLOAD_SIZE_MAX}
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PROTOCOL=${N8N_PROTOCOL}
+      - N8N_EDITOR_BASE_URL=${N8N_EDITOR_BASE_URL}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - N8N_PROXY_HOPS=${N8N_PROXY_HOPS}
+      - N8N_DEFAULT_BINARY_DATA_MODE=${N8N_DEFAULT_BINARY_DATA_MODE}
+    volumes:
+      - ./runtime/n8n_data:/home/node/.n8n
+      - ./runtime/records:/home/node/records
+      - ./runtime/audio:/home/node/audio
+    ports:
+      - "5678:5678"
+    networks: [n8nnet]
+
+  parakeet:
+    build:
+      context: .
+      dockerfile: Dockerfile.parakeet
+    restart: unless-stopped
+    environment:
+      - PARAKEET_RECORDS_DIR=/data/records
+      - PARAKEET_MODEL=${PARAKEET_MODEL}
+      - PARAKEET_DEVICE=${PARAKEET_DEVICE}
+    volumes:
+      - ./runtime/records:/data/records
+      - parakeet-cache:/root/.cache
+    networks: [n8nnet]
+
+  whisper:
+    build:
+      context: .
+      dockerfile: Dockerfile.whisper
+    restart: unless-stopped
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL}
+      - OPENAI_WHISPER_MODEL=${OPENAI_WHISPER_MODEL}
+    volumes:
+      - ./runtime/records:/data/records
+      - whisper-cache:/root/.cache/whisper
+    networks: [n8nnet]
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      n8n:
+        condition: service_started
+    ports:
+      - "8080:80"
+    volumes:
+      - ./infrastructure/gateway/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks: [n8nnet]
