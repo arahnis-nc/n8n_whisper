@@ -1,37 +1,30 @@
 # Как вызывать сервисы
 
-Этот файл — навигация по отдельным документам сервисов.
+Этот файл — навигация по отдельным документам сервисов audio-only стека.
 
 ## Быстрый старт
 
-Полный стек:
-
 ```bash
-docker compose -f docker-compose.base.yml -f docker-compose.automation.yml -f docker-compose.supabase.yml up -d
-```
-
-Только automation-контекст:
-
-```bash
-docker compose -f docker-compose.base.yml -f docker-compose.automation.yml up -d
+docker compose up -d --build
 ```
 
 ## Документация по сервисам
 
-- `docs/services/n8n.md`
 - `docs/services/whisper.md`
 - `docs/services/parakeet.md`
-- `docs/services/supabase.md`
+- `docs/services/audio-ingest.md`
 
 ## Сетевые адреса (кратко)
 
 С хоста:
-- `n8n`: `http://localhost:5678`
 - `nginx`: `http://localhost:8080`
-- `supabase kong`: `http://localhost:8000`
-- `supabase studio`: `http://localhost:3000`
+- UI загрузки: `http://localhost:8080/audio-upload`
+- `audio-ingest` через gateway: `http://localhost:8080/audio-ingest/health`
+- `whisper` через gateway: `http://localhost:8080/whisper/health`
+- `parakeet` через gateway: `http://localhost:8080/parakeet/health`
 
-Внутри docker-сети `n8nnet`:
+Внутри docker-сети `audionet`:
 - `whisper`: `http://whisper:8000`
 - `parakeet`: `http://parakeet:8000`
-- `kong`: `http://kong:8000`
+- `audio-ingest`: `http://audio-ingest:8000`
+
