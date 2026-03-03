@@ -54,33 +54,6 @@ services:
       - audio-ingest
     networks: [audionet]
 
-  audio-ingest:
-    build:
-      context: .
-      dockerfile: Dockerfile.audio-ingest
-    restart: unless-stopped
-    environment:
-      - AUDIO_RUNTIME_DIR=/data/audio
-    volumes:
-      - ./runtime/audio:/data/audio
-    networks: [n8nnet]
-
-  audio-ingest-worker:
-    build:
-      context: .
-      dockerfile: Dockerfile.audio-ingest
-    restart: unless-stopped
-    environment:
-      - AUDIO_RUNTIME_DIR=/data/audio
-      - AUDIO_OUTBOX_POLL_SECONDS=${AUDIO_OUTBOX_POLL_SECONDS:-3}
-      - AUDIO_OUTBOX_BATCH_SIZE=${AUDIO_OUTBOX_BATCH_SIZE:-10}
-    volumes:
-      - ./runtime/audio:/data/audio
-    command: ["python", "-m", "audio_ingest_api.worker"]
-    depends_on:
-      - audio-ingest
-    networks: [n8nnet]
-
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped

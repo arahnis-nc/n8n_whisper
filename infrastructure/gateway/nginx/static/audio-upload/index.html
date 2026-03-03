@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Audio Upload</title>
+  <link rel="stylesheet" href="/audio-upload/styles.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Загрузка файла в Audio Ingest</h1>
+    <p class="subtitle">Введите email, выберите файл и отправьте его в очередь обработки.</p>
+
+    <form id="upload-form" novalidate>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required placeholder="user@example.com" />
+
+      <label for="file">Файл (видео или аудио)</label>
+      <input id="file" name="file" type="file" required />
+
+      <button id="submit-btn" type="submit">Отправить</button>
+    </form>
+
+    <section id="result" class="result hidden" aria-live="polite"></section>
+    <section id="error" class="error hidden" aria-live="assertive"></section>
+  </main>
+
+  <script src="/audio-upload/app.js"></script>
+</body>
+</html>
+
