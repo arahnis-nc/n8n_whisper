@@ -16,6 +16,7 @@ class FakeRepo:
                 audio_path=None,
                 status="pending",
                 created_at=datetime.now(timezone.utc),
+                access_secret_hash="hash",
             )
         }
 
@@ -29,6 +30,7 @@ class FakeRepo:
             audio_path=item.audio_path,
             status="processing",
             created_at=item.created_at,
+            access_secret_hash=item.access_secret_hash,
         )
         self.items[event_id] = item
         return item
@@ -43,6 +45,7 @@ class FakeRepo:
             audio_path=audio_path,
             status="ready",
             created_at=item.created_at,
+            access_secret_hash=item.access_secret_hash,
         )
         self.items[event_id] = item
         return item
@@ -57,6 +60,7 @@ class FakeRepo:
             audio_path=item.audio_path,
             status="failed",
             created_at=item.created_at,
+            access_secret_hash=item.access_secret_hash,
         )
         self.items[event_id] = item
         return item

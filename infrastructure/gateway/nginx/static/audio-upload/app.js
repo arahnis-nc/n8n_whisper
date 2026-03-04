@@ -15,6 +15,11 @@ function showResult(text) {
   resultBlock.classList.remove("hidden");
 }
 
+function showResultHtml(html) {
+  resultBlock.innerHTML = html;
+  resultBlock.classList.remove("hidden");
+}
+
 function showError(text) {
   errorBlock.textContent = text;
   errorBlock.classList.remove("hidden");
@@ -61,7 +66,22 @@ form.addEventListener("submit", async (event) => {
       return;
     }
 
-    showResult(`Файл принят. event_id: ${payload.event_id}`);
+    const secret = payload.secret ?? payload.access_secret;
+    if (!secret) {
+      showError("Сервис вернул event_id без secret. Перезапустите audio-ingest с новым кодом.");
+      return;
+    }
+
+    const statusUrl = `/audio-status?event_id=${encodeURIComponent(payload.event_id)}`;
+    showResultHtml(
+      [
+        `<p>Файл принят.</p>`,
+        `<p><strong>event_id:</strong> <code>${payload.event_id}</code></p>`,
+        `<p><strong>secret:</strong> <code>${secret}</code></p>`,
+        `<p>Сохраните secret: он нужен для проверки статуса.</p>`,
+        `<p><a href="${statusUrl}">Перейти на страницу проверки статуса</a></p>`,
+      ].join("")
+    );
     form.reset();
     form.classList.add("hidden");
   } catch (error) {

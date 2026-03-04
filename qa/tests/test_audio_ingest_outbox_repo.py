@@ -12,11 +12,13 @@ def test_outbox_insert_and_transition(tmp_path: Path):
         email="user@example.com",
         source_filename="sample.mp4",
         source_path=str(tmp_path / "inbox" / "sample.mp4"),
+        access_secret_hash="hash-value",
     )
 
     pending = repo.get(event_id)
     assert pending is not None
     assert pending.status == "pending"
+    assert pending.access_secret_hash == "hash-value"
 
     processing = repo.mark_processing(event_id)
     assert processing.status == "processing"

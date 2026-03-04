@@ -54,6 +54,29 @@ services:
       - audio-ingest
     networks: [audionet]
 
+  audio-notify-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.audio-ingest
+    restart: unless-stopped
+    environment:
+      - AUDIO_RUNTIME_DIR=/data/audio
+      - AUDIO_NOTIFY_POLL_SECONDS=${AUDIO_NOTIFY_POLL_SECONDS:-5}
+      - AUDIO_NOTIFY_BATCH_SIZE=${AUDIO_NOTIFY_BATCH_SIZE:-10}
+      - AUDIO_NOTIFY_WORKER_LOG_LEVEL=${AUDIO_NOTIFY_WORKER_LOG_LEVEL:-INFO}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+      - SMTP_USE_STARTTLS=${SMTP_USE_STARTTLS:-true}
+    volumes:
+      - ./runtime/audio:/data/audio
+    command: ["python", "-m", "audio_ingest_api.notification_worker"]
+    depends_on:
+      - audio-ingest
+    networks: [audionet]
+
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped

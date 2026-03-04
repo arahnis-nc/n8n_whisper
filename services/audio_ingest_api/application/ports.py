@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Protocol
 
-from audio_ingest_api.application.dto import MediaKind, OutboxItem
+from audio_ingest_api.application.dto import MediaKind, NotificationOutboxItem, OutboxItem
 
 
 class UploadStoragePort(Protocol):
@@ -11,7 +11,9 @@ class UploadStoragePort(Protocol):
 class OutboxRepositoryPort(Protocol):
     def ensure_schema(self) -> None: ...
 
-    def create_pending(self, email: str, source_filename: str, source_path: str) -> str: ...
+    def create_pending(
+        self, email: str, source_filename: str, source_path: str, access_secret_hash: str
+    ) -> str: ...
 
     def list_pending(self, limit: int) -> list[OutboxItem]: ...
 
@@ -34,4 +36,33 @@ class AudioExtractorPort(Protocol):
 
 class AudioStoragePort(Protocol):
     def persist_audio(self, source_path: Path, source_filename: str) -> Path: ...
+
+
+class NotificationOutboxRepositoryPort(Protocol):
+    def ensure_schema(self) -> None: ...
+
+    def create_pending_notification(
+        self,
+        *,
+        event_id: str,
+        email: str,
+        access_secret: str,
+        source_filename: str,
+    ) -> str: ...
+
+    def list_pending(self, limit: int) -> list[NotificationOutboxItem]: ...
+
+    def mark_sending(self, notification_id: str) -> NotificationOutboxItem: ...
+
+    def mark_sent(self, notification_id: str) -> NotificationOutboxItem: ...
+
+    def mark_retry(self, notification_id: str, error_message: str) -> NotificationOutboxItem: ...
+
+    def get(self, notification_id: str) -> NotificationOutboxItem | None: ...
+
+    def diagnostics(self) -> dict[str, int]: ...
+
+
+class EmailSenderPort(Protocol):
+    def send(self, *, recipient: str, subject: str, body: str) -> None: ...
 

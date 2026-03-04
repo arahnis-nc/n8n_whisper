@@ -15,6 +15,7 @@ class FakeRepo:
                 audio_path=None,
                 status="pending",
                 created_at=datetime.now(timezone.utc),
+                access_secret_hash="hash",
             )
         ]
 
@@ -25,6 +26,11 @@ class FakeUseCase:
 
     def execute(self, event_id: str):
         self.processed.append(event_id)
+        return type(
+            "Result",
+            (),
+            {"event_id": event_id, "status": "ready", "audio_path": "/tmp/processed/sample.wav"},
+        )()
 
 
 def test_worker_polls_and_processes_pending_items(monkeypatch):

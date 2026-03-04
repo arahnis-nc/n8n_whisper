@@ -18,3 +18,4 @@ whisper-cache/
 *.log
 *.tmp
 .worktrees/
+docs/plans/
