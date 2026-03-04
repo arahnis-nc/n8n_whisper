@@ -51,9 +51,15 @@ curl -sS "http://audio-ingest:8000/outbox/c8b9.../status?secret=base64url-secret
   "event_id": "c8b9...",
   "status": "processing",
   "audio_ready": false,
-  "created_at": "2026-03-03T15:00:00+00:00"
+  "created_at": "2026-03-03T15:00:00+00:00",
+  "whisper_task_id": null,
+  "whisper_status": null,
+  "whisper_transcript": null,
+  "whisper_error": null
 }
 ```
+
+Когда `audio_ready=true`, поля `whisper_*` отражают состояние распознавания и (при `done`) текст транскрипта.
 
 ## Outbox-first обработка
 
@@ -67,7 +73,9 @@ curl -sS "http://audio-ingest:8000/outbox/c8b9.../status?secret=base64url-secret
 6. Outbox-запись получает:
    - `status=ready` и `audio_path`, либо
    - `status=failed` при ошибке.
-7. `audio-notify-worker` отправляет email по SMTP асинхронно:
+7. После `status=ready` воркер автоматически ставит задачу в `whisper_tasks` (SQLite),
+   чтобы `whisper-worker` начал распознавание.
+8. `audio-notify-worker` отправляет email по SMTP асинхронно:
    - тема: `Файл принят к обработке`;
    - в письме: `event_id`, `secret`, ссылка на страницу проверки;
    - текст содержит, что письмо автоматическое, отвечать на него не нужно;
@@ -80,6 +88,18 @@ curl -sS "http://audio-ingest:8000/outbox/c8b9.../status?secret=base64url-secret
 - `SMTP_USERNAME` / `SMTP_PASSWORD` — учетные данные (если нужны)
 - `SMTP_FROM` — email отправителя
 - `SMTP_USE_STARTTLS` — `true/false`, включение STARTTLS
+
+## Параметры enqueue в Whisper
+
+- `WHISPER_TASKS_DB_PATH` — путь к SQLite очереди Whisper
+- `WHISPER_TASK_BACKEND` — `local` или `cloud`
+- `WHISPER_TASK_MODEL` — локальная модель (для `local`)
+- `WHISPER_TASK_CLOUD_MODEL` — облачная модель (для `cloud`)
+- `WHISPER_TASK_MODE` — `transcribe` или `translate`
+- `WHISPER_TASK_CHUNK_SECONDS` — размер чанка
+- `WHISPER_TASK_LANGUAGE` — язык (опционально)
+- `WHISPER_TASK_PROMPT` — prompt (опционально)
+- `WHISPER_TASK_TEMPERATURE` — temperature
 
 ## Базовый health-check
 

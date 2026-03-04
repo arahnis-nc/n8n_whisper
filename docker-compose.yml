@@ -22,9 +22,39 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
       - OPENAI_WHISPER_MODEL=${OPENAI_WHISPER_MODEL}
+      - WHISPER_ALLOWED_INPUT_DIRS=${WHISPER_ALLOWED_INPUT_DIRS:-/data/records,/data/audio/processed}
     volumes:
       - ./runtime/records:/data/records
+      - ./runtime/audio:/data/audio:ro
       - whisper-cache:/root/.cache/whisper
+    networks: [audionet]
+
+  whisper-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.whisper
+    restart: unless-stopped
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - OPENAI_WHISPER_MODEL=${OPENAI_WHISPER_MODEL}
+      - WHISPER_TASKS_DB_PATH=${WHISPER_TASKS_DB_PATH:-/data/whisper/whisper.db}
+      - WHISPER_OUTBOX_POLL_SECONDS=${WHISPER_OUTBOX_POLL_SECONDS:-3}
+      - WHISPER_OUTBOX_BATCH_SIZE=${WHISPER_OUTBOX_BATCH_SIZE:-10}
+      - WHISPER_WORKER_COUNT=${WHISPER_WORKER_COUNT:-1}
+      - WHISPER_WORKER_LOG_LEVEL=${WHISPER_WORKER_LOG_LEVEL:-INFO}
+      - WHISPER_ALLOWED_INPUT_DIRS=${WHISPER_ALLOWED_INPUT_DIRS:-/data/records,/data/audio/processed}
+      - WHISPER_TEXT_POSTPROCESS_ENABLED=${WHISPER_TEXT_POSTPROCESS_ENABLED:-true}
+      - WHISPER_TEXT_POSTPROCESS_MODEL=${WHISPER_TEXT_POSTPROCESS_MODEL:-gpt-4o-mini}
+      - WHISPER_TEXT_POSTPROCESS_TEMPERATURE=${WHISPER_TEXT_POSTPROCESS_TEMPERATURE:-0.2}
+    volumes:
+      - ./runtime/records:/data/records
+      - ./runtime/audio:/data/audio:ro
+      - ./runtime/whisper:/data/whisper
+      - whisper-cache:/root/.cache/whisper
+    command: ["python", "-m", "whisper_chunk_api.worker"]
+    depends_on:
+      - whisper
     networks: [audionet]
 
   audio-ingest:
@@ -34,8 +64,10 @@ services:
     restart: unless-stopped
     environment:
       - AUDIO_RUNTIME_DIR=/data/audio
+      - WHISPER_TASKS_DB_PATH=${WHISPER_TASKS_DB_PATH:-/data/whisper/whisper.db}
     volumes:
       - ./runtime/audio:/data/audio
+      - ./runtime/whisper:/data/whisper
     networks: [audionet]
 
   audio-ingest-worker:
@@ -47,8 +79,18 @@ services:
       - AUDIO_RUNTIME_DIR=/data/audio
       - AUDIO_OUTBOX_POLL_SECONDS=${AUDIO_OUTBOX_POLL_SECONDS:-3}
       - AUDIO_OUTBOX_BATCH_SIZE=${AUDIO_OUTBOX_BATCH_SIZE:-10}
+      - WHISPER_TASKS_DB_PATH=${WHISPER_TASKS_DB_PATH:-/data/whisper/whisper.db}
+      - WHISPER_TASK_BACKEND=${WHISPER_TASK_BACKEND:-local}
+      - WHISPER_TASK_MODEL=${WHISPER_TASK_MODEL:-tiny}
+      - WHISPER_TASK_CLOUD_MODEL=${WHISPER_TASK_CLOUD_MODEL:-whisper-1}
+      - WHISPER_TASK_MODE=${WHISPER_TASK_MODE:-transcribe}
+      - WHISPER_TASK_CHUNK_SECONDS=${WHISPER_TASK_CHUNK_SECONDS:-300}
+      - WHISPER_TASK_LANGUAGE=${WHISPER_TASK_LANGUAGE:-}
+      - WHISPER_TASK_PROMPT=${WHISPER_TASK_PROMPT:-}
+      - WHISPER_TASK_TEMPERATURE=${WHISPER_TASK_TEMPERATURE:-0.0}
     volumes:
       - ./runtime/audio:/data/audio
+      - ./runtime/whisper:/data/whisper
     command: ["python", "-m", "audio_ingest_api.worker"]
     depends_on:
       - audio-ingest

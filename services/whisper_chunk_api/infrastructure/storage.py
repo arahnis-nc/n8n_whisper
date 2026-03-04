@@ -6,19 +6,26 @@ from whisper_chunk_api.application.errors import ApplicationError, NotFoundError
 
 
 class RecordsPathResolver:
-    def __init__(self, records_dir: Path):
+    def __init__(self, records_dir: Path, allowed_input_dirs: list[Path] | None = None):
         self._records_dir = records_dir.resolve()
+        roots = allowed_input_dirs or [self._records_dir]
+        self._allowed_roots = [root.resolve() for root in roots]
 
     def resolve_input_file(self, relative_path: str) -> Path:
-        candidate = (self._records_dir / relative_path).resolve()
-        if self._records_dir not in candidate.parents:
-            raise ApplicationError("Path must stay inside records directory", status_code=400)
+        raw = Path(relative_path)
+        candidate = raw.resolve() if raw.is_absolute() else (self._records_dir / raw).resolve()
+        if not any(root == candidate or root in candidate.parents for root in self._allowed_roots):
+            raise ApplicationError("Path must stay inside allowed input directories", status_code=400)
         if not candidate.is_file():
             raise NotFoundError(f"File not found: {relative_path}")
         return candidate
 
     def to_relative(self, absolute_path: Path) -> str:
-        return str(absolute_path.resolve().relative_to(self._records_dir))
+        resolved = absolute_path.resolve()
+        try:
+            return str(resolved.relative_to(self._records_dir))
+        except ValueError:
+            return str(resolved)
 
 
 class TempWorkspace:

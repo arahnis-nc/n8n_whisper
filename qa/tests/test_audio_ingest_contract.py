@@ -34,6 +34,12 @@ def test_ingest_upload_creates_pending_event(monkeypatch, tmp_path):
     assert status_body["status"] == "pending"
     assert status_body["event_id"] == body["event_id"]
     assert status_body["audio_ready"] is False
+    assert "whisper_task_id" in status_body
+    assert "whisper_status" in status_body
+    assert "whisper_transcript" in status_body
+    assert "whisper_raw_text" in status_body
+    assert "whisper_formatted_text" in status_body
+    assert "whisper_error" in status_body
 
 
 def test_outbox_status_requires_valid_secret(monkeypatch, tmp_path):

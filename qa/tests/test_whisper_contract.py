@@ -19,9 +19,15 @@ class FakeUseCase:
         }
 
 
+class FakeTaskRepo:
+    def create_ready(self, **kwargs) -> str:
+        assert kwargs["audio_path"] == "calls/call-001.mp3"
+        return "task-123"
+
+
 def test_transcribe_chunks_contract_shape():
     app = FastAPI()
-    app.include_router(build_router(FakeUseCase()))
+    app.include_router(build_router(transcribe_use_case=FakeUseCase(), task_repository=FakeTaskRepo()))
     client = TestClient(app)
 
     response = client.post(
@@ -42,3 +48,27 @@ def test_transcribe_chunks_contract_shape():
     assert set(["input_path", "backend", "model", "task", "language", "chunk_seconds", "chunks_count", "text", "chunks"]).issubset(
         body.keys()
     )
+
+
+def test_enqueue_whisper_task_contract_shape():
+    app = FastAPI()
+    app.include_router(build_router(transcribe_use_case=FakeUseCase(), task_repository=FakeTaskRepo()))
+    client = TestClient(app)
+
+    response = client.post(
+        "/tasks",
+        json={
+            "audio_path": "calls/call-001.mp3",
+            "model": "tiny",
+            "task": "transcribe",
+            "chunk_seconds": 300,
+            "backend": "local",
+            "cloud_model": "whisper-1",
+            "temperature": 0.0,
+        },
+    )
+
+    assert response.status_code == 202
+    body = response.json()
+    assert body["task_id"] == "task-123"
+    assert body["status"] == "ready"

@@ -66,3 +66,19 @@ class NotificationOutboxRepositoryPort(Protocol):
 class EmailSenderPort(Protocol):
     def send(self, *, recipient: str, subject: str, body: str) -> None: ...
 
+
+class WhisperTaskQueuePort(Protocol):
+    def enqueue_ready_task(
+        self,
+        *,
+        audio_path: str,
+        backend: str,
+        model: str,
+        cloud_model: str,
+        task: str,
+        chunk_seconds: int,
+        language: str | None,
+        prompt: str | None,
+        temperature: float,
+    ) -> str: ...
+

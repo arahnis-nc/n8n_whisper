@@ -7,6 +7,7 @@ from audio_ingest_api.application.use_cases.process_outbox_item import ProcessOu
 from audio_ingest_api.infrastructure.audio_extract import FfmpegAudioExtractor
 from audio_ingest_api.infrastructure.media_probe import FfprobeMediaProbe
 from audio_ingest_api.infrastructure.sqlite_outbox import SqliteOutboxRepository
+from audio_ingest_api.infrastructure.sqlite_whisper_tasks import SqliteWhisperTaskQueue
 from audio_ingest_api.infrastructure.storage import RuntimeAudioStorage
 
 logger = logging.getLogger("audio_ingest_worker")
@@ -16,14 +17,26 @@ def build_processor() -> tuple[SqliteOutboxRepository, ProcessOutboxItemUseCase]
     runtime_audio_dir = Path(os.getenv("AUDIO_RUNTIME_DIR", "/data/audio"))
     processed_dir = runtime_audio_dir / "processed"
     outbox_db = runtime_audio_dir / "outbox" / "outbox.db"
+    whisper_db = Path(os.getenv("WHISPER_TASKS_DB_PATH", "/data/whisper/whisper.db"))
 
     outbox_repository = SqliteOutboxRepository(outbox_db)
     outbox_repository.ensure_schema()
+    whisper_queue = SqliteWhisperTaskQueue(whisper_db)
+    whisper_queue.ensure_schema()
     use_case = ProcessOutboxItemUseCase(
         outbox_repository=outbox_repository,
         media_probe=FfprobeMediaProbe(),
         audio_extractor=FfmpegAudioExtractor(processed_dir=processed_dir),
         audio_storage=RuntimeAudioStorage(processed_dir=processed_dir),
+        whisper_task_queue=whisper_queue,
+        whisper_backend=os.getenv("WHISPER_TASK_BACKEND", "local"),
+        whisper_model=os.getenv("WHISPER_TASK_MODEL", "tiny"),
+        whisper_cloud_model=os.getenv("WHISPER_TASK_CLOUD_MODEL", os.getenv("OPENAI_WHISPER_MODEL", "whisper-1")),
+        whisper_task=os.getenv("WHISPER_TASK_MODE", "transcribe"),
+        whisper_chunk_seconds=int(os.getenv("WHISPER_TASK_CHUNK_SECONDS", "300")),
+        whisper_language=os.getenv("WHISPER_TASK_LANGUAGE") or None,
+        whisper_prompt=os.getenv("WHISPER_TASK_PROMPT") or None,
+        whisper_temperature=float(os.getenv("WHISPER_TASK_TEMPERATURE", "0.0")),
     )
     return outbox_repository, use_case
 

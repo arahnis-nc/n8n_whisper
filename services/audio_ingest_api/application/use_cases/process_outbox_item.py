@@ -7,6 +7,7 @@ from audio_ingest_api.application.ports import (
     AudioStoragePort,
     MediaProbePort,
     OutboxRepositoryPort,
+    WhisperTaskQueuePort,
 )
 
 
@@ -17,11 +18,29 @@ class ProcessOutboxItemUseCase:
         media_probe: MediaProbePort,
         audio_extractor: AudioExtractorPort,
         audio_storage: AudioStoragePort,
+        whisper_task_queue: WhisperTaskQueuePort,
+        whisper_backend: str,
+        whisper_model: str,
+        whisper_cloud_model: str,
+        whisper_task: str,
+        whisper_chunk_seconds: int,
+        whisper_language: str | None,
+        whisper_prompt: str | None,
+        whisper_temperature: float,
     ):
         self._outbox_repository = outbox_repository
         self._media_probe = media_probe
         self._audio_extractor = audio_extractor
         self._audio_storage = audio_storage
+        self._whisper_task_queue = whisper_task_queue
+        self._whisper_backend = whisper_backend
+        self._whisper_model = whisper_model
+        self._whisper_cloud_model = whisper_cloud_model
+        self._whisper_task = whisper_task
+        self._whisper_chunk_seconds = whisper_chunk_seconds
+        self._whisper_language = whisper_language
+        self._whisper_prompt = whisper_prompt
+        self._whisper_temperature = whisper_temperature
 
     def execute(self, event_id: str) -> ProcessResult:
         item = self._outbox_repository.mark_processing(event_id)
@@ -37,6 +56,17 @@ class ProcessOutboxItemUseCase:
                 raise ApplicationError("Unsupported media type", status_code=400)
 
             updated = self._outbox_repository.mark_ready(event_id, audio_path=str(audio_path))
+            self._whisper_task_queue.enqueue_ready_task(
+                audio_path=str(audio_path),
+                backend=self._whisper_backend,
+                model=self._whisper_model,
+                cloud_model=self._whisper_cloud_model,
+                task=self._whisper_task,
+                chunk_seconds=self._whisper_chunk_seconds,
+                language=self._whisper_language,
+                prompt=self._whisper_prompt,
+                temperature=self._whisper_temperature,
+            )
             return ProcessResult(
                 event_id=updated.id,
                 status=updated.status,

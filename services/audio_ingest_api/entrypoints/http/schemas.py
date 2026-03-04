@@ -12,6 +12,12 @@ class OutboxStatusResponse(BaseModel):
     status: str
     audio_ready: bool
     created_at: str
+    whisper_task_id: str | None = None
+    whisper_status: str | None = None
+    whisper_transcript: str | None = None
+    whisper_raw_text: str | None = None
+    whisper_formatted_text: str | None = None
+    whisper_error: str | None = None
 
 
 class NotificationDiagnosticsResponse(BaseModel):

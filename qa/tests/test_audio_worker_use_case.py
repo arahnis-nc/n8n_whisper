@@ -84,32 +84,65 @@ class FakeStorage:
         return Path("/tmp/processed/audio.mp3")
 
 
+class FakeWhisperQueue:
+    def __init__(self):
+        self.enqueued: list[dict] = []
+
+    def enqueue_ready_task(self, **kwargs) -> str:
+        self.enqueued.append(kwargs)
+        return "task-1"
+
+
 def test_process_outbox_video_to_ready():
     repo = FakeRepo(source_filename="sample.mp4")
+    queue = FakeWhisperQueue()
     use_case = ProcessOutboxItemUseCase(
         outbox_repository=repo,
         media_probe=FakeProbe("video"),
         audio_extractor=FakeExtractor(),
         audio_storage=FakeStorage(),
+        whisper_task_queue=queue,
+        whisper_backend="local",
+        whisper_model="tiny",
+        whisper_cloud_model="whisper-1",
+        whisper_task="transcribe",
+        whisper_chunk_seconds=300,
+        whisper_language=None,
+        whisper_prompt=None,
+        whisper_temperature=0.0,
     )
 
     result = use_case.execute("evt-1")
     assert result.status == "ready"
     assert result.audio_path is not None
     assert result.audio_path.endswith("video.wav")
+    assert len(queue.enqueued) == 1
+    assert queue.enqueued[0]["audio_path"].endswith("video.wav")
 
 
 def test_process_outbox_audio_to_ready():
     repo = FakeRepo(source_filename="sample.mp3")
+    queue = FakeWhisperQueue()
     use_case = ProcessOutboxItemUseCase(
         outbox_repository=repo,
         media_probe=FakeProbe("audio"),
         audio_extractor=FakeExtractor(),
         audio_storage=FakeStorage(),
+        whisper_task_queue=queue,
+        whisper_backend="local",
+        whisper_model="tiny",
+        whisper_cloud_model="whisper-1",
+        whisper_task="transcribe",
+        whisper_chunk_seconds=300,
+        whisper_language=None,
+        whisper_prompt=None,
+        whisper_temperature=0.0,
     )
 
     result = use_case.execute("evt-1")
     assert result.status == "ready"
     assert result.audio_path is not None
     assert result.audio_path.endswith("audio.mp3")
+    assert len(queue.enqueued) == 1
+    assert queue.enqueued[0]["audio_path"].endswith("audio.mp3")
 

@@ -3,10 +3,13 @@
 Сервис: `services/whisper_chunk_api`  
 Внутренний URL в docker-сети: `http://whisper:8000`
 
+Отдельный polling-воркер: `python -m whisper_chunk_api.worker`
+
 ## Эндпоинты
 
 - `GET /health` — проверка состояния
 - `POST /transcribe-chunks` — разбиение аудио на чанки и распознавание
+- `POST /tasks` — поставить mp3 задачу в SQLite очередь `whisper_tasks` для воркера
 
 ## Базовый health-check
 
@@ -118,3 +121,53 @@ curl -sS http://whisper:8000/transcribe-chunks \
   - уменьшить `chunk_seconds`
   - задать `language`
   - для local сменить `model` на более точную
+
+## Whisper worker (SQLite queue)
+
+Воркер читает готовые mp3-задачи из SQLite (`status=ready`), отправляет файл в обработку и записывает результат разбора обратно в SQLite.
+
+### Переменные окружения
+
+- `WHISPER_TASKS_DB_PATH` — путь к БД задач (по умолчанию `/data/whisper/whisper.db`)
+- `WHISPER_OUTBOX_POLL_SECONDS` — пауза между polling-циклами
+- `WHISPER_OUTBOX_BATCH_SIZE` — сколько задач забрать за один claim
+- `WHISPER_WORKER_COUNT` — количество параллельных worker-потоков
+- `WHISPER_WORKER_LOG_LEVEL` — уровень логирования
+- `WHISPER_ALLOWED_INPUT_DIRS` — список разрешенных директорий для входных файлов (через запятую)
+- `WHISPER_TEXT_POSTPROCESS_ENABLED` — включить постобработку транскрипта через ChatGPT
+- `WHISPER_TEXT_POSTPROCESS_MODEL` — модель ChatGPT для вычитки/разбивки по спикерам
+- `WHISPER_TEXT_POSTPROCESS_TEMPERATURE` — температура для постобработки
+
+### Схема очереди
+
+Таблица `whisper_tasks`:
+- вход: `audio_path`, `status=ready`, параметры транскрибации (`backend`, `model`, `cloud_model`, `task`, `chunk_seconds`, `language`, `prompt`, `temperature`)
+- выход: `status=done|failed`, `transcript_text`, `transcript_json`, `error`
+
+Если включен `WHISPER_TEXT_POSTPROCESS_ENABLED=true`, воркер после ASR отправляет текст в ChatGPT:
+- добавляет пунктуацию;
+- раскладывает текст по репликам (`Спикер 1:`, `Спикер 2:`).
+
+### Постановка задачи в очередь
+
+Пример:
+
+```bash
+curl -sS http://whisper:8000/tasks \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "audio_path": "calls/call-001.mp3",
+    "backend": "local",
+    "model": "tiny",
+    "task": "transcribe",
+    "chunk_seconds": 300,
+    "temperature": 0.0
+  }'
+```
+
+Ответ:
+- `task_id` — идентификатор задачи в `whisper_tasks`
+- `status` — `ready`
+
+Обычно этот endpoint вызывается автоматически из `audio-ingest-worker` после того, как mp3
+был выделен/подготовлен в `runtime/audio/processed`.
