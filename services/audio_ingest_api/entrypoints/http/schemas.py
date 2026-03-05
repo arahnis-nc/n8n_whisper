@@ -17,6 +17,7 @@ class OutboxStatusResponse(BaseModel):
     whisper_transcript: str | None = None
     whisper_raw_text: str | None = None
     whisper_formatted_text: str | None = None
+    whisper_summary: str | None = None
     whisper_error: str | None = None
 
 

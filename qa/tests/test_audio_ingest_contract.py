@@ -39,6 +39,7 @@ def test_ingest_upload_creates_pending_event(monkeypatch, tmp_path):
     assert "whisper_transcript" in status_body
     assert "whisper_raw_text" in status_body
     assert "whisper_formatted_text" in status_body
+    assert "whisper_summary" in status_body
     assert "whisper_error" in status_body
 
 

@@ -22,19 +22,27 @@
 cp .env.example .env
 ```
 
-2) Поднимите стек:
+2) Создайте файл Basic Auth для `nginx`:
+
+```bash
+printf "admin:$(openssl passwd -apr1 'admin')\n" > infrastructure/gateway/nginx/.htpasswd
+```
+
+Можно заменить `admin/admin` на свои значения логина и пароля.
+
+3) Поднимите стек:
 
 ```bash
 docker compose up -d --build
 ```
 
-3) Проверка:
+4) Проверка:
 
 ```bash
-curl -sS http://localhost:8080/audio-upload
-curl -sS http://localhost:8080/audio-ingest/health
-curl -sS http://localhost:8080/whisper/health
-curl -sS http://localhost:8080/parakeet/health
+curl -u admin:admin -sS http://localhost:8080/audio-upload
+curl -u admin:admin -sS http://localhost:8080/audio-ingest/health
+curl -u admin:admin -sS http://localhost:8080/whisper/health
+curl -u admin:admin -sS http://localhost:8080/parakeet/health
 ```
 
 ## Env-переменные

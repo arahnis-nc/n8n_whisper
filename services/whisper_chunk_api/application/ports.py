@@ -35,3 +35,17 @@ class WorkspacePort(Protocol):
 
 class TranscriptPostprocessorPort(Protocol):
     def postprocess(self, *, text: str, language: str | None) -> str: ...
+
+
+class TranscriptSummaryPort(Protocol):
+    def summarize(self, *, text: str) -> str: ...
+
+
+class SummaryEmailSenderPort(Protocol):
+    def send_summary(
+        self,
+        *,
+        recipient: str,
+        event_id: str | None,
+        summary: str,
+    ) -> None: ...

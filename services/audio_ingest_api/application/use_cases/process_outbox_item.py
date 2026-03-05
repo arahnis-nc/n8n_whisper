@@ -58,6 +58,8 @@ class ProcessOutboxItemUseCase:
             updated = self._outbox_repository.mark_ready(event_id, audio_path=str(audio_path))
             self._whisper_task_queue.enqueue_ready_task(
                 audio_path=str(audio_path),
+                event_id=updated.id,
+                requester_email=updated.email,
                 backend=self._whisper_backend,
                 model=self._whisper_model,
                 cloud_model=self._whisper_cloud_model,

@@ -24,13 +24,6 @@ def build_router(
 ) -> APIRouter:
     router = APIRouter()
 
-    def _truncate(value: str | None, limit: int = 3000) -> str | None:
-        if not value:
-            return value
-        if len(value) <= limit:
-            return value
-        return f"{value[:limit]}..."
-
     @router.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok"}
@@ -62,9 +55,11 @@ def build_router(
         whisper_task = None
         raw_text = None
         formatted_text = None
+        summary_text = None
         if item.audio_path:
             whisper_task = whisper_task_queue.get_latest_by_audio_path(item.audio_path)
         transcript = whisper_task.transcript_text if whisper_task else None
+        summary_text = whisper_task.summary if whisper_task else None
         if whisper_task and whisper_task.transcript_json:
             try:
                 payload = json.loads(whisper_task.transcript_json)
@@ -73,9 +68,6 @@ def build_router(
             except Exception:
                 raw_text = None
                 formatted_text = None
-        transcript = _truncate(transcript)
-        raw_text = _truncate(raw_text)
-        formatted_text = _truncate(formatted_text)
         return OutboxStatusResponse(
             event_id=item.id,
             status=item.status,
@@ -86,6 +78,7 @@ def build_router(
             whisper_transcript=transcript,
             whisper_raw_text=raw_text,
             whisper_formatted_text=formatted_text,
+            whisper_summary=summary_text,
             whisper_error=whisper_task.error if whisper_task else None,
         )
 

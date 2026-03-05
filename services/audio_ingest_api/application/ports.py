@@ -72,6 +72,8 @@ class WhisperTaskQueuePort(Protocol):
         self,
         *,
         audio_path: str,
+        event_id: str | None,
+        requester_email: str | None,
         backend: str,
         model: str,
         cloud_model: str,

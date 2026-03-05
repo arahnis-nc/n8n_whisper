@@ -137,16 +137,30 @@ curl -sS http://whisper:8000/transcribe-chunks \
 - `WHISPER_TEXT_POSTPROCESS_ENABLED` — включить постобработку транскрипта через ChatGPT
 - `WHISPER_TEXT_POSTPROCESS_MODEL` — модель ChatGPT для вычитки/разбивки по спикерам
 - `WHISPER_TEXT_POSTPROCESS_TEMPERATURE` — температура для постобработки
+- `WHISPER_SUMMARY_ENABLED` — включить генерацию summary встречи через ChatGPT
+- `WHISPER_SUMMARY_MODEL` — модель ChatGPT для summary
+- `WHISPER_SUMMARY_TEMPERATURE` — температура для summary
+- `WHISPER_SUMMARY_EMAIL_ENABLED` — отправлять summary на почту запросившего
 
 ### Схема очереди
 
 Таблица `whisper_tasks`:
 - вход: `audio_path`, `status=ready`, параметры транскрибации (`backend`, `model`, `cloud_model`, `task`, `chunk_seconds`, `language`, `prompt`, `temperature`)
-- выход: `status=done|failed`, `transcript_text`, `transcript_json`, `error`
+- выход: `status=done|failed`, `transcript_text`, `transcript_json`, `summary`, `error`
 
 Если включен `WHISPER_TEXT_POSTPROCESS_ENABLED=true`, воркер после ASR отправляет текст в ChatGPT:
 - добавляет пунктуацию;
 - раскладывает текст по репликам (`Спикер 1:`, `Спикер 2:`).
+
+Если включен `WHISPER_SUMMARY_ENABLED=true`, воркер формирует `summary` по фиксированному аналитическому промпту со структурой:
+- `## Решения`
+- `## Открытые вопросы`
+- `## Action items`
+- `## Риски`
+
+Если `WHISPER_SUMMARY_EMAIL_ENABLED=true` и в задаче известен email запросившего, summary отправляется на почту.
+Текст письма содержит обязательную фразу:
+`Письмо отправлено автоматически, отвечать на него не нужно.`
 
 ### Постановка задачи в очередь
 

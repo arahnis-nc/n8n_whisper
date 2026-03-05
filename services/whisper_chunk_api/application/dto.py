@@ -18,6 +18,8 @@ class ChunkTranscribeCommand:
 class WhisperTaskItem:
     id: str
     audio_path: str
+    event_id: str | None
+    requester_email: str | None
     status: str
     backend: str
     model: str
@@ -29,4 +31,5 @@ class WhisperTaskItem:
     temperature: float
     transcript_text: str | None
     transcript_json: str | None
+    summary: str | None = None
     error: str | None = None
